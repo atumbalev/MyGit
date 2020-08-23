@@ -1,6 +1,6 @@
 #include "SourceFile.hpp"
 
-SourceFile::SourceFile(std::string name, std::vector<unsigned char> digest) : name(std::move(name)), digest(std::move(digest)) {}
+SourceFile::SourceFile(std::string name, std::string digest) : name(std::move(name)), digest(std::move(digest)) {}
 
 
 const std::string& SourceFile::getName() const
@@ -16,4 +16,19 @@ BaseFile* SourceFile::clone() const
 FileType SourceFile::getType() const
 {
     return SOURCE_FILE;
+}
+
+const std::string& SourceFile::getDigest() const
+{
+    return digest;
+}
+
+void SourceFile::setName(const std::string& name)
+{
+    SourceFile::name = name;
+}
+
+void SourceFile::setDigest(const std::string& digest)
+{
+    SourceFile::digest = digest;
 }

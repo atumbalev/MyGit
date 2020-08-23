@@ -10,104 +10,39 @@ template <typename T>
 class List
 {
 public:
-    List() : first(nullptr), last(nullptr), m_size(0) {}
+    using Iterator = ListIterator<T>;
+    using ConstIterator = ListConstIterator<T>;
+
+public:
+    List() : m_first(nullptr), m_last(nullptr), m_size(0) {}
     List(std::initializer_list<T> list);
-    List(const List<T>& other) : m_size(0)
-    {
-        copy(other);
-    }
+    List(const List<T>& other);
+    List(List&& other);
+    List& operator=(const List& other);
+    List& operator=(List&& other);
+    ~List();
 
-    ~List()
-    {
-        clear();
-    }
+    ConstIterator cbegin() const;
+    ConstIterator cend() const;
+    ConstIterator clast() const;
 
-    ListConstIterator<T> cbegin() const;
-    ListConstIterator<T> cend() const;
+    Iterator begin();
+    Iterator end();
+    Iterator last();
 
-    ListIterator<T> begin();
-    ListIterator<T> end();
-
-    void insert_after(ListConstIterator<T> position, const T& value)
-    {
-        Node<T>* beforeInserted = const_cast<Node<T>*>(position.m_ptr);
-        Node<T>* afterInserted = beforeInserted->next;
-        Node<T>* newNode;
-
-        try
-        {
-            newNode = new Node<T>(value);
-        }
-        catch (const std::bad_alloc& er)
-        {
-            delete newNode;
-            throw er;
-        }
-
-        beforeInserted->next = newNode;
-        newNode->next = afterInserted;
-    }
+    Iterator insert_after(ListConstIterator<T> position, const T& value);
 
     template<typename Head, typename ...Tail>
-    void insert_after(ListConstIterator<T> position, Head head, Tail... tail)
-    {
-        insert_after(position, std::move(head));
-        insert_after(position, std::move(tail)...);
-    }
+    void insert_after(ListConstIterator<T> position, Head head, Tail... tail);
 
-    void splice(List<T>& other, ListConstIterator<T> position)
-    {
-        Node<T>* beforeInserted = const_cast<Node<T>*>(position.m_ptr);
-        Node<T>* afterInserted = beforeInserted->next;
+    void splice(List<T>& other, ListConstIterator<T> position);
+    void splice(List<T>& other);
 
-        beforeInserted->next = other.first;
-        other.last->next = afterInserted;
-        m_size += other.m_size;
-
-        other.first = other.last = nullptr;
-        other.m_size = 0;
-    }
-
-    void splice(List<T>& other)
-    {
-        splice(other, ListConstIterator<T>(last));
-    }
-
-    void removeAfter(ListConstIterator<T> it)
-    {
-        Node<T>* beforeRemoved = const_cast<Node<T>*>(it.m_ptr);
-        Node<T>* removed = beforeRemoved->next;
-        Node<T>* afterRemoved = removed->next;
-
-        beforeRemoved->next = afterRemoved;
-
-        delete removed;
-    }
-
-    void remove(const T& value)
-    {
-        for (ListConstIterator<T> it = cbegin(); it != ListConstIterator(last); ++it)
-        {
-            if (it.m_ptr->next->data == value)
-            {
-                removeAfter(it);
-                return;
-            }
-        }
-    }
+    Iterator removeAfter(ListConstIterator<T> it);
+    Iterator remove(ListConstIterator<T> it);
 
     void push_front(const T& val);
-    void push_back(const T& val)
-    {
-        Node<T>* newNode = new Node<T>(val);
-        if (empty())
-        {
-
-        }
-
-        last->next = newNode;
-        last = newNode;
-    }
+    void push_back(const T& val);
     void pop_front();
 
     size_t size() const;
@@ -122,16 +57,23 @@ public:
     }
 
 private:
-    Node<T>* first;
-    Node<T>* last;
+    Node<T>* m_first;
+    Node<T>* m_last;
     size_t m_size;
 
     void copy(const List<T>& other)
     {
         for (ListConstIterator<T> it = other.cbegin(); it != other.cend(); ++it)
         {
-            push_front(*it);
+            push_back(*it);
         }
+    }
+
+    void swap(List& other)
+    {
+        std::swap(m_first, other.m_first);
+        std::swap(m_last, other.m_last);
+        std::swap(m_size, other.m_size);
     }
 
 };

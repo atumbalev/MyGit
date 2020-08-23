@@ -15,6 +15,7 @@ class ListIterator
     friend class ListConstIterator<T>;
     using iterator_category = std::forward_iterator_tag;
 public:
+    ListIterator() = default;
     ListIterator(nullptr_t);
     ListIterator(Node<T>* ptr);
 

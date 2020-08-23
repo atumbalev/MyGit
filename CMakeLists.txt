@@ -5,7 +5,13 @@ find_package(OpenSSL REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(MyGit src/Main.cpp src/Files/BaseFile.hpp src/Enums/FileType.hpp src/Hashing/HashingFunctions.hpp src/Files/SourceFile.cpp src/Files/SourceFile.hpp src/Files/Directory.cpp src/Files/Directory.hpp src/List/List.hpp src/List/List.inl src/List/ListIterator.hpp src/List/ListIterator.inl src/List/ListNode.hpp src/List/ListConstIterator.hpp src/List/ListConstIterator.inl)
+add_executable(MyGit
+        src/Main.cpp
+        src/Files/BaseFile.hpp src/Files/SourceFile.cpp src/Files/SourceFile.hpp src/Files/Directory.cpp src/Files/Directory.hpp src/Files/DirectoryEntry.cpp src/Files/DirectoryEntry.hpp
+        src/Enums/FileType.hpp
+        src/Hashing/HashingFunctions.hpp
+        src/List/List.hpp src/List/List.inl src/List/ListIterator.hpp src/List/ListIterator.inl src/List/ListNode.hpp src/Files/SourceFile.cpp src/Files/SourceFile.hpp src/Files/Directory.cpp src/Files/Directory.hpp src/List/ListConstIterator.hpp src/List/ListConstIterator.inl
+        src/HashMap/HashMap.hpp src/HashMap/HashMapIterator.hpp src/HashMap/HashMapIterator.inl src/HashMap/HashMap.inl)
 
 target_link_libraries(MyGit stdc++fs)
 target_link_libraries(MyGit OpenSSL::SSL)
