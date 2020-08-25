@@ -1,14 +1,14 @@
 #pragma once
 
+#include <iostream>
 #include "BaseFile.hpp"
 #include "SourceFile.hpp"
-#include "Directory.hpp"
 
 class DirectoryEntry
 {
 public:
-    DirectoryEntry() = default;
-    DirectoryEntry(BaseFile* file) : file(file) {}
+    DirectoryEntry() = delete;
+    DirectoryEntry(BaseFile* file) : file(file->clone()) {}
     DirectoryEntry(const DirectoryEntry& other) : file(other.file->clone()) {}
     DirectoryEntry(DirectoryEntry&& other) : file(other.file)
     {
@@ -26,6 +26,7 @@ public:
             delete file;
             file = other.file->clone();
         }
+        return *this;
     }
 
     DirectoryEntry& operator=(DirectoryEntry&& other)
@@ -36,6 +37,7 @@ public:
             file = other.file;
             other.file = nullptr;
         }
+        return *this;
     }
 
     bool operator==(const DirectoryEntry& rhs) const
@@ -54,7 +56,7 @@ public:
         {
             const SourceFile* lhsFile = reinterpret_cast<SourceFile*>(file);
             const SourceFile* rhsFile = reinterpret_cast<SourceFile*>(rhs.file);
-            return lhsFile->getDigest() == rhsFile->getDigest();
+            return lhsFile->getHash() == rhsFile->getHash();
         }
 
         return true;

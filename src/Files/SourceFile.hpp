@@ -7,7 +7,7 @@ class SourceFile : public BaseFile
 {
 public:
     SourceFile() = default;
-    SourceFile(std::string  name, std::string  digest);
+    SourceFile(std::string  name, std::string  hash);
     SourceFile(const SourceFile& other) = default;
     SourceFile(SourceFile&& other) = default;
 
@@ -20,12 +20,12 @@ public:
     virtual BaseFile* clone() const override;
     virtual FileType getType() const override;
 
-    const std::string&getDigest() const;
+    const std::string& getHash() const;
 
     void setName(const std::string& name);
-    void setDigest(const std::string& digest);
+    void setDigest(const std::string& newHash);
 
 private:
     std::string name;
-    std::string digest;
+    std::string hash;
 };

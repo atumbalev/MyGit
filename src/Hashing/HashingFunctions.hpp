@@ -1,34 +1,70 @@
-#include <openssl/conf.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
+#pragma once
+
+#include <openssl/sha.h>
 #include <filesystem>
-#include <vector>
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include <sstream>
 
 namespace fs = std::filesystem;
 
-std::vector<unsigned char> hashString(const std::string string)
+#define HASH_STRING_LENGTH (2 * SHA256_DIGEST_LENGTH)
+
+std::string hashString(const std::string &str)
 {
-    /* Load the human readable error strings for libcrypto */
-    ERR_load_crypto_strings();
+    unsigned char digest[SHA256_DIGEST_LENGTH];
 
-    /* Load all digest and cipher algorithms */
-    OpenSSL_add_all_algorithms();
+    SHA256_CTX ctx;
+    SHA256_Init(&ctx);
+    SHA256_Update(&ctx, str.c_str(), str.size());
+    SHA256_Final(digest, &ctx);
 
-    /* Load config file, and other important initialisation */
-    OPENSSL_config(NULL);
+    // Write byte string to hex string
+    std::stringstream ss;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+    {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)digest[i];
+    }
 
-    /* ... Do some crypto stuff here ... */
+    return ss.str();
+}
 
+std::string hashFile(const fs::path& filePath)
+{
+    unsigned char digest[SHA256_DIGEST_LENGTH];
 
-    /* Clean up */
+    SHA256_CTX ctx;
+    SHA256_Init(&ctx);
 
-    /* Removes all digests and ciphers */
-    EVP_cleanup();
+    std::ifstream file(filePath);
+    if (!file)
+    {
+        throw std::runtime_error("Hash File: File not found!");
+    }
 
-    /* if you omit the next, a small leak may be left when you make use of the BIO (low level API) for e.g. base64 transformations */
-    CRYPTO_cleanup_all_ex_data();
+    const size_t BUFFER_SIZE = 4096;
+    char buffer[BUFFER_SIZE];
 
-    /* Remove error strings */
-    ERR_free_strings();
+    while (file)
+    {
+        file.read (buffer, BUFFER_SIZE - 1);
+        SHA256_Update(&ctx, buffer, file.gcount());
+    }
 
+    if (!file.eof ())
+    {
+        throw std::runtime_error("Hash File: Could not read whole file!");
+    }
+
+    SHA256_Final(digest, &ctx);
+
+    // Write byte string to hex string
+    std::stringstream ss;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+    {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)digest[i];
+    }
+
+    return ss.str();
 }

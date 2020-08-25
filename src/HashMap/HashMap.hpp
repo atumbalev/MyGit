@@ -12,7 +12,7 @@ class HashMap {
     friend class HashMapIterator<K, T, HashFunction>;
 
     using Pair = std::pair<K, T>;
-    using Iterator = HashMapIterator<K, T, HashFunction>;
+
 
     using Bucket =  List<Pair>;
     using HashTable = std::vector<Bucket>;
@@ -20,8 +20,13 @@ class HashMap {
     using ElementIterator =  typename Bucket::Iterator;
     using BucketIterator =  typename HashTable::iterator;
 public:
+    using Iterator = HashMapIterator<K, T, HashFunction>;
     HashMap();
-
+    HashMap(size_t capacity) : table(HashTable(capacity)), count(0), hashFunction(HashFunction()) {}
+    HashMap(const HashMap<K, T, HashFunction>& other);
+    HashMap(HashMap<K, T, HashFunction>&& other);
+    HashMap& operator=(const HashMap<K, T, HashFunction>& other);
+    ~HashMap() = default;
     void clear();
 
     Iterator begin();

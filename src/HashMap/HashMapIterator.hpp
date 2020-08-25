@@ -32,7 +32,7 @@ public:
 
     bool operator!=(const HashMapIterator &other) const;
 
-private:
+//private:
     HashTable *table;
     BucketIterator bucket;
     ElementIterator element;

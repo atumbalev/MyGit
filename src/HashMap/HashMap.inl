@@ -133,3 +133,21 @@ void HashMap<K, T, HashFunction>::resize()
         bucket.clear();
     }
 }
+
+template<typename K, typename T, typename HashFunction>
+HashMap<K, T, HashFunction>::HashMap(const HashMap<K, T, HashFunction>& other) : table(other.table), count(other.count), hashFunction(other.hashFunction) {}
+
+template<typename K, typename T, typename HashFunction>
+HashMap<K, T, HashFunction>::HashMap(HashMap<K, T, HashFunction>&& other) : table(std::move(other.table)), count(other.count), hashFunction(other.hashFunction) {}
+
+template<typename K, typename T, typename HashFunction>
+HashMap<K, T, HashFunction>& HashMap<K, T, HashFunction>::operator=(const HashMap<K, T, HashFunction>& other)
+{
+    if (this != &other)
+    {
+        table = other.table;
+        count = other.count;
+        hashFunction = other.hashFunction;
+    }
+    return *this;
+}
