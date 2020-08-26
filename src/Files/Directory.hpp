@@ -1,9 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <filesystem>
 #include "BaseFile.hpp"
 #include "DirectoryEntry.hpp"
 #include "../HashMap/HashMap.hpp"
+
+namespace fs = std::filesystem;
 
 class Directory : public BaseFile
 {
@@ -39,12 +42,26 @@ public:
         contents.insert(file->getName(), DirectoryEntry(file));
     }
 
-    BaseFile* findFile(const std::string& fileName)
+    BaseFile* findFile(const fs::path& filePath)
     {
-        auto entry = contents.find(fileName);
+
+        HashMap<std::string, DirectoryEntry>::Iterator entry = contents.begin();
+        auto& currentContents = contents;
+        for (const fs::path& fileName : filePath.parent_path())
+        {
+            entry = currentContents.find(fileName.string());
+            if (entry == contents.end())
+            {
+                throw std::runtime_error("Directory: Find file: File not found!");
+            }
+
+            currentContents = dynamic_cast<Directory*>(entry->second.getFile())->contents;
+        }
+
+        entry = currentContents.find(filePath.filename());
         if (entry == contents.end())
         {
-            return nullptr;
+            throw std::runtime_error("Directory: Find file: File not found!");
         }
         return entry->second.getFile();
     }
@@ -72,6 +89,7 @@ public:
             throw std::runtime_error("Directory Serialization: Malformed File!");
         }
 
+        next = in.peek();
         while (next != '}')
         {
             if (in.peek () == '(')

@@ -19,7 +19,8 @@ public:
     ListConstIterator(Node<T>* ptr);
     ListConstIterator(ListIterator<T> it) : m_ptr(it.m_ptr) {}
 
-    ListConstIterator(const ListConstIterator& other) = default;
+    ListConstIterator() = default;
+    ListConstIterator(const ListConstIterator& other) : m_ptr(other.m_ptr) {}
     ListConstIterator& operator=(const ListConstIterator& other) = default;
 
     ~ListConstIterator() = default;

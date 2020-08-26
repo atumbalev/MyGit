@@ -135,7 +135,13 @@ void HashMap<K, T, HashFunction>::resize()
 }
 
 template<typename K, typename T, typename HashFunction>
-HashMap<K, T, HashFunction>::HashMap(const HashMap<K, T, HashFunction>& other) : table(other.table), count(other.count), hashFunction(other.hashFunction) {}
+HashMap<K, T, HashFunction>::HashMap(const HashMap<K, T, HashFunction>& other) : table(other.table.capacity()), count(other.count), hashFunction(other.hashFunction)
+{
+    for (auto it = other.cbegin(); it != other.cend(); ++it)
+    {
+        insert(it->first, it->second);
+    }
+}
 
 template<typename K, typename T, typename HashFunction>
 HashMap<K, T, HashFunction>::HashMap(HashMap<K, T, HashFunction>&& other) : table(std::move(other.table)), count(other.count), hashFunction(other.hashFunction) {}

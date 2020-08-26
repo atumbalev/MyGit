@@ -26,7 +26,7 @@ List<T>::List(List&& other) : m_size(0)
 template<typename T>
 List<T>& List<T>::operator=(const List& other)
 {
-    if (this != other)
+    if (this != &other)
     {
         clear();
         copy(other);
@@ -38,7 +38,7 @@ List<T>& List<T>::operator=(const List& other)
 template<typename T>
 List<T>& List<T>::operator=(List&& other)
 {
-    if (this != other)
+    if (this != &other)
     {
         clear();
         swap(other);

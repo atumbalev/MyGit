@@ -3,6 +3,7 @@
 #include <vector>
 #include "../List/List.hpp"
 #include "HashMapIterator.hpp"
+#include "HashMapConstIterator.hpp"
 
 template <typename K, typename T, typename HashFunction>
 class HashMapIterator;
@@ -10,6 +11,7 @@ class HashMapIterator;
 template <typename K, typename T, typename HashFunction = std::hash<K>>
 class HashMap {
     friend class HashMapIterator<K, T, HashFunction>;
+    friend class HashMapConstIterator<K, T, HashFunction>;
 
     using Pair = std::pair<K, T>;
 
@@ -18,9 +20,13 @@ class HashMap {
     using HashTable = std::vector<Bucket>;
 
     using ElementIterator =  typename Bucket::Iterator;
+    using ElementConstIterator =  typename Bucket::ConstIterator;
+
     using BucketIterator =  typename HashTable::iterator;
+    using BucketConstIterator = typename HashTable::const_iterator;
 public:
     using Iterator = HashMapIterator<K, T, HashFunction>;
+    using ConstIterator = HashMapConstIterator<K, T, HashFunction>;
     HashMap();
     HashMap(size_t capacity) : table(HashTable(capacity)), count(0), hashFunction(HashFunction()) {}
     HashMap(const HashMap<K, T, HashFunction>& other);
@@ -31,6 +37,16 @@ public:
 
     Iterator begin();
     Iterator end();
+
+    ConstIterator cbegin() const
+    {
+        return ConstIterator (table);
+    }
+
+    ConstIterator cend() const
+    {
+        return ConstIterator(table, table.cend(), table.back().cend());
+    }
 
     Iterator find(const K &key);
 

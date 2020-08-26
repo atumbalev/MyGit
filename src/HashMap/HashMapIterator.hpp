@@ -8,6 +8,8 @@ template <typename K, typename T, typename HashFunction>
 class HashMapIterator {
     friend class HashMap<K, T, HashFunction>;
 
+    using iterator_tag = std::forward_iterator_tag;
+
     using Bucket = typename HashMap<K, T, HashFunction>::Bucket;
     using HashTable = typename HashMap<K, T, HashFunction>::HashTable;
 
@@ -23,6 +25,16 @@ public:
 
     ConstPair & operator*();
 
+    const std::pair<const K, const T> & operator*() const
+    {
+        return const_cast<const std::pair<const K, const T>>(*element);
+    }
+
+    const std::pair<const K, const T> * operator->() const
+    {
+        return &(operator*());
+    }
+
     ConstPair * operator->();
 
     HashMapIterator operator++(int);
@@ -32,7 +44,7 @@ public:
 
     bool operator!=(const HashMapIterator &other) const;
 
-//private:
+private:
     HashTable *table;
     BucketIterator bucket;
     ElementIterator element;
