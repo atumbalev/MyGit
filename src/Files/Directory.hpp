@@ -42,24 +42,24 @@ public:
         contents.insert(file->getName(), DirectoryEntry(file));
     }
 
-    BaseFile* findFile(const fs::path& filePath)
+    const BaseFile* findFile(const fs::path& filePath) const
     {
 
-        HashMap<std::string, DirectoryEntry>::Iterator entry = contents.begin();
-        auto& currentContents = contents;
+        HashMap<std::string, DirectoryEntry>::ConstIterator entry = contents.cbegin();
+        const auto* currentContents = &contents;
         for (const fs::path& fileName : filePath.parent_path())
         {
-            entry = currentContents.find(fileName.string());
-            if (entry == contents.end())
+            entry = currentContents->find(fileName.string());
+            if (entry == contents.cend())
             {
                 throw std::runtime_error("Directory: Find file: File not found!");
             }
 
-            currentContents = dynamic_cast<Directory*>(entry->second.getFile())->contents;
+            currentContents = &dynamic_cast<const Directory*>(entry->second.getFile())->contents;
         }
 
-        entry = currentContents.find(filePath.filename());
-        if (entry == contents.end())
+        entry = currentContents->find(filePath.filename().string());
+        if (entry == contents.cend())
         {
             throw std::runtime_error("Directory: Find file: File not found!");
         }
@@ -71,13 +71,36 @@ public:
         serializeRec(out, const_cast<Directory*>(this));
     }
 
+    void prettyPrint(std::ostream& out, int tabs = 0) const
+    {
+        for (HashMap<std::string, DirectoryEntry>::ConstIterator entry = contents.cbegin(); entry != contents.cend(); ++entry)
+        {
+            const BaseFile* base = entry->second.getFile();
+            printTabs(out, tabs);
+            out << base->getName() << std::endl;
+
+            if (base->getType() == DIRECTORY)
+            {
+                const Directory* dir = dynamic_cast<const Directory*>(base);
+                dir->prettyPrint(out, tabs + 1);
+            }
+        }
+    }
+
+    void printTabs(std::ostream& out, int times) const
+    {
+        for (int i = 0; i < times; ++i)
+        {
+            out << '\t';
+        }
+    }
+
     void deserialize(std::istream& in)
     {
         char next;
         in >> next;
         if (next != '(')
         {
-            std::cout << next << std::endl;
             throw std::runtime_error("Directory Serialization: Malformed File!");
         }
 
@@ -90,16 +113,15 @@ public:
         }
 
         next = in.peek();
-        while (next != '}')
+        while (next != '}' && in.good())
         {
             if (in.peek () == '(')
             {
                 Directory* subdir = new Directory();
                 subdir->deserialize(in);
                 contents.insert(subdir->getName(), subdir);
-
                 in >> next;
-                if (next != '}')
+                if (next != '}' && next != ',')
                 {
                     throw std::runtime_error("Directory Serialization: Malformed File!");
                 }
@@ -164,6 +186,6 @@ private:
                 out << ',';
             }
         }
-        out << '}';
+        out << '}' << std::flush;
     }
 };

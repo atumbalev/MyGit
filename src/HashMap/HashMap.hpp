@@ -48,7 +48,19 @@ public:
         return ConstIterator(table, table.cend(), table.back().cend());
     }
 
-    Iterator find(const K &key);
+    Iterator find(const K& key);
+    ConstIterator find(const K& key) const
+    {
+        BucketConstIterator bucket = getBucket(key);
+        for (ElementConstIterator elIter = bucket->cbegin(); elIter != bucket->cend(); ++elIter)
+        {
+            if (elIter->first == key)
+            {
+                return ConstIterator(table, bucket, elIter);
+            }
+        }
+        return cend();
+    }
 
     Iterator insert(const K &key, const T &value);
 
@@ -65,7 +77,11 @@ private:
     HashFunction hashFunction;
 
     int index(const K &key) const;
-    BucketIterator getBucket(const K &key);
+    BucketIterator getBucket(const K& key);
+    BucketConstIterator getBucket(const K& key) const
+    {
+        return table.cbegin() + index(key);
+    }
     bool shouldResize();
     void resize();
 

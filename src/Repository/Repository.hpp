@@ -5,6 +5,7 @@
 #include <fstream>
 #include "../Commit/Commit.hpp"
 #include "../Hashing/HashingFunctions.hpp"
+#include "RepositoryMetaInfo.hpp"
 
 namespace fs = std::filesystem;
 
@@ -39,16 +40,67 @@ public:
 
         fs::create_directory(gitDir);
 
-        std::ofstream clog(commitLog);
-        clog.close();
+        info = RepositoryMetaInfo{0, -1, -1};
 
-        std::ofstream cLogMeta(commitLogMetadata);
-        cLogMeta.close();
+        Commit init(info.nextCommitId++);
+        info.currentCommitId = init.getId();
+        info.headCommitId = init.getId();
+        commits.push_back(init);
+
+        save();
 
         fs::create_directory(fileStorage);
     }
 
-    BaseFile* storeFile(const fs::path& filePath)
+    void load()
+    {
+        std::ifstream cLogMeta(commitLogMetadata);
+        cLogMeta >> info;
+        cLogMeta.close();
+
+        std::ifstream cLog(commitLog);
+        commits.clear();
+        deserializeCommits(cLog);
+        cLog.close();
+    }
+
+    void save() const
+    {
+        std::ofstream cLogMeta(commitLogMetadata, std::ios::trunc);
+        cLogMeta << info;
+        cLogMeta.close();
+
+        std::ofstream cLog(commitLog, std::ios::trunc);
+        serializeCommits(cLog);
+        cLog.close();
+    }
+
+    void commit(const fs::path& repoPath, const std::string& author, const std::string& message)
+    {
+        load();
+        Directory* tree = dynamic_cast<Directory*>(buildFileTree(repoPath));
+        commits.emplace_back(Commit(setPushCommitInfo(), author, message, *tree));
+        save();
+    }
+
+    int setPushCommitInfo()
+    {
+        info.currentCommitId = info.nextCommitId;
+        info.headCommitId = info.nextCommitId;
+        return info.nextCommitId++;
+    }
+
+    void log(bool printDir = false, std::ostream& out = std::cout)
+    {
+        for (const Commit& commit : commits)
+        {
+            commit.prettyPrint(out, printDir);
+        }
+    }
+
+    enum Flag {STORE, BUILD_ONLY};
+
+    BaseFile* buildFileTree(const fs::path& filePath, Flag flag = STORE)
     {
         BaseFile* file;
         if (fs::is_directory(filePath))
@@ -59,7 +111,7 @@ public:
             {
                 if (path != gitDir)
                 {
-                    dir->addFile(storeFile(path));
+                    dir->addFile(buildFileTree(path, flag));
                 }
             }
         }
@@ -68,7 +120,7 @@ public:
             std::string fileHash = hashFile(filePath);
             fs::path fileToStorePath = fileStorage / fileHash.substr(0, 2) / fileHash.substr(2, fileHash.size() - 2);
 
-            if (fs::exists(fileToStorePath))
+            if (flag == BUILD_ONLY || fs::exists(fileToStorePath))
             {
                 return new SourceFile(filePath.filename(), fileHash);
             }
@@ -92,28 +144,97 @@ public:
         return fileStorage / hash.substr(0,2) / hash.substr(2, hash.size() - 2);
     }
 
-    void revertFile(BaseFile* file, fs::path path)
+    const Directory* fetchCommitWorkTree(int commitId)
     {
-        fs::path relative = fs::relative(path, workTree);
-        if (file->getType() == SOURCE_FILE)
+        if (commitId > info.currentCommitId)
         {
-            SourceFile* src = dynamic_cast<SourceFile*>(file);
-            fs::path storedPath = getStoredFile(src);
-            fs::remove(relative);
-            fs::copy_file(storedPath, path);
+            throw std::runtime_error("Repository: there is no commit with such id");
         }
-        else // DIRECTORY
+
+        const Directory* tree;
+        for (const Commit& c : commits)
         {
-            Directory* dir = dynamic_cast<Directory*>(file);
-            for (auto& it : dir->getContents())
+            if(c.getId() == commitId)
             {
-                revertFile(it.second.getFile(), relative);
+                tree = c.getWorkTree();
+            }
+        }
+        return tree;
+    }
+
+    void revertFile(const fs::path& path, int commitId)
+    {
+        const Directory* tree = fetchCommitWorkTree(commitId);
+        const BaseFile* file = tree->findFile(path);
+        assert(file->getType() == SOURCE_FILE);
+        revertSourceFile(dynamic_cast<const SourceFile*>(file), workTree / path);
+    }
+
+    void revertSourceFile(const SourceFile* file, const fs::path& dest)
+    {
+        fs::path stored = getStoredFile(file);
+        fs::remove(dest);
+        fs::copy_file(stored, dest);
+    }
+
+    void checkout(int commitId)
+    {
+        const Directory* tree = fetchCommitWorkTree(commitId);
+        for (const fs::path& path : fs::directory_iterator(workTree))
+        {
+            if (path != gitDir)
+            {
+                fs::remove_all(path);
+            }
+        }
+
+        buildTreeRec(tree, workTree);
+        info.headCommitId = commitId;
+    }
+
+    void buildTreeRec(const Directory* directory, const fs::path path)
+    {
+        const BaseFile* file;
+        for (auto it = directory->getContents().cbegin(); it != directory->getContents().cend(); ++ it)
+        {
+            file = it->second.getFile();
+
+            if (file->getType() == SOURCE_FILE)
+            {
+                const SourceFile* src = dynamic_cast<const SourceFile*>(file);
+                revertSourceFile(src, path / src->getName());
+            }
+            else
+            {
+                const Directory* dir = dynamic_cast<const Directory*>(file);
+                fs::create_directory(path / dir->getName());
+                buildTreeRec(dir, path / dir->getName());
             }
         }
     }
 
+    void serializeCommits(std::ofstream& out) const
+    {
+        for (const Commit& commit : commits)
+        {
+            out << commit << std::endl;
+        }
+    }
+
+    void deserializeCommits(std::istream& in)
+    {
+        for (int i = 0; i < info.currentCommitId; ++i)
+        {
+            Commit c;
+            in >> c;
+            commits.emplace_back(c);
+        }
+    }
+
 //private:
+    RepositoryMetaInfo info;
     std::vector<Commit> commits;
+
     fs::path workTree;
     fs::path gitDir;
     fs::path commitLog;
