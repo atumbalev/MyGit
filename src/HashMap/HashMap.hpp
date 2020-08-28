@@ -38,29 +38,11 @@ public:
     Iterator begin();
     Iterator end();
 
-    ConstIterator cbegin() const
-    {
-        return ConstIterator (table);
-    }
-
-    ConstIterator cend() const
-    {
-        return ConstIterator(table, table.cend(), table.back().cend());
-    }
+    ConstIterator cbegin() const;
+    ConstIterator cend() const;
 
     Iterator find(const K& key);
-    ConstIterator find(const K& key) const
-    {
-        BucketConstIterator bucket = getBucket(key);
-        for (ElementConstIterator elIter = bucket->cbegin(); elIter != bucket->cend(); ++elIter)
-        {
-            if (elIter->first == key)
-            {
-                return ConstIterator(table, bucket, elIter);
-            }
-        }
-        return cend();
-    }
+    ConstIterator find(const K& key) const;
 
     Iterator insert(const K &key, const T &value);
 
@@ -70,6 +52,7 @@ public:
     Iterator erase(const K &key);
 
     int size() const;
+    bool empty() const;
 
 private:
     HashTable table;
@@ -78,10 +61,9 @@ private:
 
     int index(const K &key) const;
     BucketIterator getBucket(const K& key);
-    BucketConstIterator getBucket(const K& key) const
-    {
-        return table.cbegin() + index(key);
-    }
+    BucketConstIterator getBucket(const K& key) const;
+
+    void copy(const HashMap<K, T, HashFunction>& other);
     bool shouldResize();
     void resize();
 

@@ -25,6 +25,18 @@ HashMapIterator<K, T, HashFunction> HashMap<K, T, HashFunction>::end()
 }
 
 template<typename K, typename T, typename HashFunction>
+typename HashMap<K, T, HashFunction>::ConstIterator HashMap<K, T, HashFunction>::cbegin() const
+{
+    return ConstIterator (table);
+}
+
+template<typename K, typename T, typename HashFunction>
+typename HashMap<K, T, HashFunction>::ConstIterator HashMap<K, T, HashFunction>::cend() const
+{
+    return ConstIterator(table, table.cend(), table.back().cend());
+}
+
+template<typename K, typename T, typename HashFunction>
 typename HashMap<K, T, HashFunction>::Iterator HashMap<K, T, HashFunction>::find(const K& key)
 {
     BucketIterator bucket = getBucket(key);
@@ -36,6 +48,20 @@ typename HashMap<K, T, HashFunction>::Iterator HashMap<K, T, HashFunction>::find
         }
     }
     return end();
+}
+
+template<typename K, typename T, typename HashFunction>
+typename HashMap<K, T, HashFunction>::ConstIterator HashMap<K, T, HashFunction>::find(const K& key) const
+{
+    BucketConstIterator bucket = getBucket(key);
+    for (ElementConstIterator elIter = bucket->cbegin(); elIter != bucket->cend(); ++elIter)
+    {
+        if (elIter->first == key)
+        {
+            return ConstIterator(table, bucket, elIter);
+        }
+    }
+    return cend();
 }
 
 template<typename K, typename T, typename HashFunction>
@@ -57,7 +83,7 @@ typename HashMap<K, T, HashFunction>::Iterator HashMap<K, T, HashFunction>::inse
     }
 
     ++count;
-    ElementIterator element = bucket->insert_after(bucket->begin(), std::make_pair(key, value));
+    ElementIterator element = bucket->insert_after(bucket->beforeBegin(), std::make_pair(key, value));
     return Iterator(table, bucket, element);
 }
 
@@ -102,6 +128,12 @@ int HashMap<K, T, HashFunction>::size() const
 }
 
 template<typename K, typename T, typename HashFunction>
+bool HashMap<K, T, HashFunction>::empty() const
+{
+    return count == 0;
+}
+
+template<typename K, typename T, typename HashFunction>
 int HashMap<K, T, HashFunction>::index(const K& key) const
 {
     return hashFunction(key) % table.size();
@@ -128,19 +160,16 @@ void HashMap<K, T, HashFunction>::resize()
 
     for (Bucket & bucket : newTable) {
         for (Pair & el : bucket) {
-            getBucket(el.first)->push_back(std::make_pair(el.first, el.second));
+            getBucket(el.first)->push_front(std::make_pair(el.first, el.second));
         }
         bucket.clear();
     }
 }
 
 template<typename K, typename T, typename HashFunction>
-HashMap<K, T, HashFunction>::HashMap(const HashMap<K, T, HashFunction>& other) : table(other.table.capacity()), count(other.count), hashFunction(other.hashFunction)
+HashMap<K, T, HashFunction>::HashMap(const HashMap<K, T, HashFunction>& other)
 {
-    for (auto it = other.cbegin(); it != other.cend(); ++it)
-    {
-        insert(it->first, it->second);
-    }
+    copy(other);
 }
 
 template<typename K, typename T, typename HashFunction>
@@ -151,9 +180,24 @@ HashMap<K, T, HashFunction>& HashMap<K, T, HashFunction>::operator=(const HashMa
 {
     if (this != &other)
     {
-        table = other.table;
-        count = other.count;
-        hashFunction = other.hashFunction;
+        copy(other);
     }
     return *this;
+}
+
+template<typename K, typename T, typename HashFunction>
+typename HashMap<K, T, HashFunction>::BucketConstIterator HashMap<K, T, HashFunction>::getBucket(const K& key) const
+{
+    return table.cbegin() + index(key);
+}
+
+template<typename K, typename T, typename HashFunction>
+void HashMap<K, T, HashFunction>::copy(const HashMap<K, T, HashFunction>& other)
+{
+    hashFunction = other.hashFunction;
+    table = HashTable(other.table.capacity());
+    for (auto it = other.cbegin(); it != other.cend(); ++it)
+    {
+        insert(it->first, it->second);
+    }
 }

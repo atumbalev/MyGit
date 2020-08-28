@@ -16,7 +16,7 @@ class ListConstIterator
     friend class List<T>;
 public:
     ListConstIterator(nullptr_t);
-    ListConstIterator(Node<T>* ptr);
+    ListConstIterator(const Node<T>* ptr);
     ListConstIterator(ListIterator<T> it) : m_ptr(it.m_ptr) {}
 
     ListConstIterator() = default;

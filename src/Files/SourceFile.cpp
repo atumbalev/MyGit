@@ -32,3 +32,14 @@ void SourceFile::setDigest(const std::string& newHash)
 {
     SourceFile::hash = newHash;
 }
+
+bool SourceFile::operator==(const SourceFile& rhs) const
+{
+    return name == rhs.name &&
+           hash == rhs.hash;
+}
+
+bool SourceFile::operator!=(const SourceFile& rhs) const
+{
+    return !(rhs == *this);
+}

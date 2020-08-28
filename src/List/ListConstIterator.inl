@@ -3,7 +3,7 @@ template<typename T>
 ListConstIterator<T>::ListConstIterator(nullptr_t) : m_ptr(nullptr) {}
 
 template<typename T>
-ListConstIterator<T>::ListConstIterator(Node<T>* ptr) : m_ptr(ptr) {}
+ListConstIterator<T>::ListConstIterator(const Node<T>* ptr) : m_ptr(ptr) {}
 
 template<typename T>
 const T& ListConstIterator<T>::operator*() const
