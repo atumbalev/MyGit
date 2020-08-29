@@ -1,18 +1,14 @@
-#include <iostream>
-#include <sstream>
-#include "Commit/Commit.hpp"
-#include "Hashing/HashingFunctions.hpp"
-#include "Repository/Repository.hpp"
+#include "CommandLineParser/Parser.hpp"
+#include "HashMap/HashMap.hpp"
 
-int main()
+int main(int argc, const char* argv[])
 {
-    Repository repository("/home/atanas/Documents/sd/testingArea");
-//    fs::remove_all(repository.gitDir);
-//    repository.init();
-    repository.load();
-    repository.log();
-//    repository.checkout(1);
-//    repository.commit("/home/atanas/Documents/sd/testingArea", "atanas", "second commit");
-    repository.status();
-    repository.save();
+    if (argc == 1)
+    {
+        std::cerr << "Input a command to execute" << std::endl;
+        return -1;
+    }
+
+    ParserSingleton::getInstance().parseCommand(argc, argv);
+
 }

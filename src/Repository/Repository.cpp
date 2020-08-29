@@ -67,14 +67,14 @@ void Repository::save() const
     cLog.close();
 }
 
-void Repository::commit(const fs::path& repoPath, const std::string& author, const std::string& message)
+void Repository::commit(const std::string& author, const std::string& message)
 {
     if (metaInfo.currentCommitId != metaInfo.headCommitId)
     {
         throw std::runtime_error("The Repository HEAD is detached. Cannot commit.");
     }
 
-    Directory* tree = dynamic_cast<Directory*>(buildFileTree(repoPath));
+    Directory* tree = dynamic_cast<Directory*>(buildFileTree(workTree));
     commits.emplace_back(Commit(setPushCommitInfo(), author, message, *tree));
 }
 
@@ -159,7 +159,16 @@ void Repository::revert(const fs::path& path, int commitId)
 {
     const Directory* tree = fetchCommitWorkTree(commitId);
     const BaseFile* file = tree->findFile(path);
-    buildTreeRec(dynamic_cast<const Directory*>(file), path);
+    if (file->getType() == SOURCE_FILE)
+    {
+        revertSourceFile(dynamic_cast<const SourceFile*>(file), workTree / path);
+    }
+    else
+    {
+        fs::remove_all(workTree / path);
+        fs::create_directory(workTree / path);
+        buildTreeRec(dynamic_cast<const Directory*>(file), workTree / path);
+    }
 }
 
 void Repository::revertSourceFile(const SourceFile* file, const fs::path& dest) const
@@ -243,4 +252,14 @@ void Repository::status(std::ostream& out)
         out << "Not commited:" << std::endl;
         diffTree->prettyPrint(out, 1);
     }
+}
+
+int Repository::getCurrentCommitId() const
+{
+    return metaInfo.currentCommitId;
+}
+
+int Repository::getHeadCommitId() const
+{
+    return metaInfo.headCommitId;
 }

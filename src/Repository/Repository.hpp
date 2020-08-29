@@ -22,21 +22,14 @@ public:
     void save() const;
 
     void init();
-    void commit(const fs::path& repoPath, const std::string& author, const std::string& message);
+    void commit(const std::string& author, const std::string& message);
     void checkout(int commitId);
     void log(bool printDir = false, std::ostream& out = std::cout) const;
     void revert(const fs::path& path, int commitId);
     void status(std::ostream& out = std::cout);
 
-    int getCurrentCommitId() const
-    {
-        return metaInfo.currentCommitId;
-    }
-
-    int getHeadCommitId() const
-    {
-        return metaInfo.headCommitId;
-    }
+    int getCurrentCommitId() const;
+    int getHeadCommitId() const;
 
 private:
     void configurePaths(const fs::path& repoPath);

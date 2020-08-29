@@ -8,6 +8,14 @@
 template <typename K, typename T, typename HashFunction>
 class HashMapIterator;
 
+template <typename K, typename T, typename HashFunction>
+class HashMapConstIterator;
+
+///
+/// \tparam K key type
+/// \tparam T element type
+/// \tparam HashFunction hash function, that must work on K
+/// HashMap implementation that uses @vector as a bucket container and @List as an element container
 template <typename K, typename T, typename HashFunction = std::hash<K>>
 class HashMap {
     friend class HashMapIterator<K, T, HashFunction>;
@@ -46,6 +54,7 @@ public:
 
     Iterator insert(const K &key, const T &value);
 
+    /// operator[] suggests element access with constant complexity, so I implemented it
     T& operator[](const K &key);
 
     Iterator erase(Iterator it);
